@@ -60,9 +60,11 @@ export async function POST(req: Request) {
     // Crear sesión de Stripe Checkout
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
-    const tenantUrl = appUrl.includes('localhost')
-      ? `${appUrl}?tenant=${slug}`
-      : `https://${slug}.${rootDomain}`
+    // Solo usamos subdominio cuando hay dominio custom configurado (no en *.vercel.app)
+    const isCustomDomain = !rootDomain.includes('vercel.app') && !rootDomain.includes('localhost')
+    const tenantUrl = isCustomDomain
+      ? `https://${slug}.${rootDomain}`
+      : `${appUrl}/t/${slug}`
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

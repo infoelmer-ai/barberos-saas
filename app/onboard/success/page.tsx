@@ -20,11 +20,12 @@ export default async function SuccessPage({
   }
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
-  const isLocal = rootDomain.includes('localhost')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const isCustomDomain = !rootDomain.includes('vercel.app') && !rootDomain.includes('localhost')
   const tenantUrl = slug
-    ? isLocal
-      ? `http://${rootDomain}?tenant=${slug}`
-      : `https://${slug}.${rootDomain}`
+    ? isCustomDomain
+      ? `https://${slug}.${rootDomain}`
+      : `${appUrl}/t/${slug}`
     : null
 
   return (
