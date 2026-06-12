@@ -57,6 +57,21 @@ export async function POST(req: Request) {
       { tenant_id: tenant.id, name: 'Corte + Barba', price: 9, duration_min: 60, emoji: '💈' },
     ])
 
+    // Sembrar el owner como primer barbero (puede agregar/editar después)
+    const initials = body.owner
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() || '')
+      .join('')
+    await supabase.from('barbers').insert({
+      tenant_id: tenant.id,
+      name: body.owner.trim(),
+      specialty: 'Barbero principal',
+      initials: initials || 'B',
+      color: '#C9A84C',
+    })
+
     // Crear sesión de Stripe Checkout
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
