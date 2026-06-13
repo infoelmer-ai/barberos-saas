@@ -26,6 +26,8 @@ CREATE TABLE tenants (
   trial_reminder_3d_sent BOOLEAN DEFAULT false,
   trial_reminder_1d_sent BOOLEAN DEFAULT false,
   trial_ended_notified BOOLEAN DEFAULT false,
+  deposit_enabled BOOLEAN DEFAULT false,
+  deposit_percent INTEGER DEFAULT 50,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -88,6 +90,8 @@ CREATE TABLE appointments (
   status TEXT DEFAULT 'confirmed' CHECK (status IN ('confirmed','cancelled','completed','no_show')),
   pending_charge BOOLEAN DEFAULT false,
   reminder_sent BOOLEAN DEFAULT false,
+  deposit_paid BOOLEAN DEFAULT false,
+  deposit_amount DECIMAL(10,2) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

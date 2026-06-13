@@ -185,6 +185,45 @@ export async function sendTrialEnded(opts: {
   }
 }
 
+// Recordatorio al cliente ~24h antes de su cita (reduce no-shows)
+export async function sendAppointmentReminder(opts: {
+  clientEmail: string
+  clientName: string
+  tenantName: string
+  barberName: string
+  serviceName: string
+  date: string
+  time: string
+  bookingUrl: string
+  brandColor?: string | null
+  whiteLabel?: boolean
+}) {
+  if (!resend) return
+  const accent = opts.brandColor || GOLD
+  const footer = opts.whiteLabel
+    ? `Enviado por ${opts.tenantName}`
+    : 'Enviado por BarberOS · Sistema de agendamiento para barberías'
+  const body = `
+    <p style="margin:0 0 16px">Hola <strong>${opts.clientName}</strong>, te recordamos tu cita en <strong>${opts.tenantName}</strong> <strong style="color:${accent}">mañana</strong>. 💈</p>
+    <table width="100%" style="font-size:13px;margin:8px 0 16px">
+      ${row('✂️ Servicio', opts.serviceName)}
+      ${row('💈 Barbero', opts.barberName)}
+      ${row('📅 Fecha', opts.date)}
+      ${row('⏰ Hora', opts.time)}
+    </table>
+    <p style="margin:0;color:${MUTED};font-size:12px">¿No podrás asistir? Cancela con tiempo desde <a href="${opts.bookingUrl}" style="color:${accent}">la página de la barbería</a> (usa tu teléfono). Cancelar con menos de 24h puede generar un cargo.</p>`
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: opts.clientEmail,
+      subject: `Recordatorio: tu cita en ${opts.tenantName} es mañana a las ${opts.time}`,
+      html: shell('Recordatorio de tu cita', body, { accent, footer }),
+    })
+  } catch {
+    /* noop */
+  }
+}
+
 // Confirmación + felicitación al mejorar de plan
 export async function sendPlanUpgraded(opts: {
   ownerEmail: string

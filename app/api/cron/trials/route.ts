@@ -1,8 +1,54 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { chargeTenant } from '@/lib/billing/charge'
-import { sendTrialReminder, sendTrialEnded } from '@/lib/email/resend'
+import { sendTrialReminder, sendTrialEnded, sendAppointmentReminder } from '@/lib/email/resend'
 import type { Tenant } from '@/lib/supabase/types'
+
+// Recordatorios a clientes con cita mañana (reduce no-shows). Best-effort.
+async function sendDayBeforeReminders(admin: ReturnType<typeof createAdminClient>, appUrl: string) {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowISO = tomorrow.toISOString().split('T')[0]
+
+  const { data: apts } = await admin
+    .from('appointments')
+    .select(
+      'id, date, time, client_name, client_email, tenants(name, slug, brand_color, plan), barbers(name), services(name)'
+    )
+    .eq('status', 'confirmed')
+    .eq('date', tomorrowISO)
+    .eq('reminder_sent', false)
+    .not('client_email', 'is', null)
+
+  let sent = 0
+  for (const a of apts || []) {
+    // Supabase embebe las relaciones como objeto o array según la inferencia
+    const pick = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v)
+    const t = pick(a.tenants as unknown)
+    const b = pick(a.barbers as unknown)
+    const s = pick(a.services as unknown)
+    const tenant = t as { name: string; slug: string; brand_color: string | null; plan: string } | null
+    const barber = b as { name: string } | null
+    const service = s as { name: string } | null
+    if (!tenant || !a.client_email) continue
+
+    await sendAppointmentReminder({
+      clientEmail: a.client_email,
+      clientName: a.client_name,
+      tenantName: tenant.name,
+      barberName: barber?.name || 'tu barbero',
+      serviceName: service?.name || 'tu servicio',
+      date: a.date,
+      time: String(a.time).slice(0, 5),
+      bookingUrl: `${appUrl}/t/${tenant.slug}`,
+      brandColor: tenant.brand_color,
+      whiteLabel: tenant.plan === 'business',
+    })
+    await admin.from('appointments').update({ reminder_sent: true }).eq('id', a.id)
+    sent++
+  }
+  return sent
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -68,5 +114,8 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, ...summary })
+  // Recordatorios a clientes con cita mañana
+  const reminders24h = await sendDayBeforeReminders(admin, appUrl)
+
+  return NextResponse.json({ ok: true, ...summary, reminders24h })
 }

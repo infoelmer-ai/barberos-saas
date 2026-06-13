@@ -249,6 +249,7 @@ export default function TenantBooking({
                 onConfirm={confirmBooking}
                 submitting={submitting}
                 error={error}
+                depositPercent={tenant.deposit_enabled ? tenant.deposit_percent || 0 : 0}
               />
             )}
           </div>
@@ -881,6 +882,7 @@ function Step5({
   onConfirm,
   submitting,
   error,
+  depositPercent,
 }: {
   barber: Barber
   service: Service
@@ -889,7 +891,9 @@ function Step5({
   onConfirm: () => void
   submitting: boolean
   error: string | null
+  depositPercent: number
 }) {
+  const deposit = depositPercent > 0 ? (Number(service.price) * depositPercent) / 100 : 0
   return (
     <div>
       <p style={S.step}>Paso 5 · Confirmar</p>
@@ -953,6 +957,31 @@ function Step5({
           ))}
         </div>
       </div>
+
+      {deposit > 0 && (
+        <div
+          style={{
+            maxWidth: 480,
+            background: 'var(--brand)',
+            borderRadius: 9,
+            padding: '14px 18px',
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            color: '#fff',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>💳 Anticipo para reservar</div>
+            <div style={{ fontSize: 11, opacity: 0.9 }}>
+              {depositPercent}% del servicio · se abona a tu corte
+            </div>
+          </div>
+          <div style={{ fontSize: 24, fontWeight: 700 }}>${deposit.toFixed(2)}</div>
+        </div>
+      )}
+
       {error && (
         <div
           style={{
@@ -974,7 +1003,7 @@ function Step5({
           ← Editar
         </button>
         <button style={btnBrand} onClick={onConfirm} disabled={submitting}>
-          {submitting ? 'Confirmando...' : '✓ Confirmar Cita'}
+          {submitting ? 'Confirmando...' : deposit > 0 ? '✓ Confirmar y reservar' : '✓ Confirmar Cita'}
         </button>
       </div>
     </div>

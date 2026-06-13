@@ -40,3 +40,22 @@ export async function chargeTenant(tenant: Tenant): Promise<ChargeResult> {
   void amount
   return { ok: false, error: 'Procesador de pagos aún no configurado (n1co pendiente de sandbox)' }
 }
+
+// ─────────────────────────────────────────────────────────────────
+// COBRO DE ANTICIPO AL CLIENTE FINAL (anti no-show)
+// ─────────────────────────────────────────────────────────────────
+// Cobra el anticipo al CLIENTE de la barbería al momento de reservar.
+// Requiere n1co (cobro a consumidor con tarjeta en la página pública).
+// Hoy es stub: devuelve no-configurado. Cuando n1co esté listo, aquí se
+// genera el cobro/link de pago por `amount` y se confirma la cita solo si
+// el pago es exitoso.
+// ─────────────────────────────────────────────────────────────────
+export async function chargeDeposit(_opts: {
+  tenantId: string
+  amount: number
+  cardToken?: string
+  description: string
+}): Promise<ChargeResult> {
+  // TODO(n1co): cobrar el anticipo con la API de n1co.
+  return { ok: false, error: 'Cobro de anticipo aún no disponible (n1co pendiente)' }
+}

@@ -10,6 +10,7 @@ import BarberManager from './BarberManager'
 import ServiceManager from './ServiceManager'
 import AdvancedAnalytics from './AdvancedAnalytics'
 import BrandingManager from './BrandingManager'
+import DepositManager from './DepositManager'
 
 interface Props {
   tenant: Tenant
@@ -29,7 +30,7 @@ export default function TenantAdmin({
   demoMode = false,
 }: Props) {
   const [tab, setTab] = useState<
-    'dashboard' | 'analytics' | 'citas' | 'barberos' | 'servicios' | 'marca'
+    'dashboard' | 'analytics' | 'citas' | 'barberos' | 'servicios' | 'pagos' | 'marca'
   >('dashboard')
   const [barbers, setBarbers] = useState(barbersInit)
   const [services, setServices] = useState(servicesInit)
@@ -247,6 +248,7 @@ export default function TenantAdmin({
               { v: 'citas', l: 'Citas' },
               { v: 'barberos', l: 'Barberos' },
               { v: 'servicios', l: 'Servicios' },
+              { v: 'pagos', l: 'Pagos' },
               { v: 'marca', l: 'Marca' },
             ] as const
           ).map((x, i, arr) => (
@@ -316,6 +318,10 @@ export default function TenantAdmin({
         )}
         {tab === 'servicios' && (
           <ServiceManager services={services} setServices={setServices} demoMode={demoMode} />
+        )}
+
+        {tab === 'pagos' && (
+          <DepositManager tenant={tenant} services={services} demoMode={demoMode} />
         )}
 
         {tab === 'marca' &&

@@ -21,6 +21,8 @@ export interface Tenant {
   trial_reminder_3d_sent: boolean
   trial_reminder_1d_sent: boolean
   trial_ended_notified: boolean
+  deposit_enabled: boolean
+  deposit_percent: number
   created_at: string
   updated_at: string
 }
@@ -61,6 +63,8 @@ export interface Appointment {
   status: AppointmentStatus
   pending_charge: boolean
   reminder_sent: boolean
+  deposit_paid: boolean
+  deposit_amount: number
   created_at: string
 }
 
