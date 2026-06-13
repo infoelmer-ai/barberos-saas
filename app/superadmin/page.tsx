@@ -38,11 +38,43 @@ export default async function SuperAdminPage() {
     countByTenant[a.tenant_id] = (countByTenant[a.tenant_id] || 0) + 1
   }
 
+  // Métricas de capacidad (datos reales)
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
+  const [aptsMonth, aptsMonthEmail, barberCount, serviceCount, aptTotal] = await Promise.all([
+    admin.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', monthStart),
+    admin
+      .from('appointments')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', monthStart)
+      .not('client_email', 'is', null),
+    admin.from('barbers').select('*', { count: 'exact', head: true }),
+    admin.from('services').select('*', { count: 'exact', head: true }),
+    admin.from('appointments').select('*', { count: 'exact', head: true }),
+  ])
+
+  const bookingsThisMonth = aptsMonth.count || 0
+  const bookingsWithEmail = aptsMonthEmail.count || 0
+  // Estimación de correos/mes: 1 aviso al dueño por cita + 1 confirmación si el cliente dio email
+  const estEmailsThisMonth = bookingsThisMonth + bookingsWithEmail
+  const totalRows =
+    (tenants?.length || 0) + (barberCount.count || 0) + (serviceCount.count || 0) + (aptTotal.count || 0)
+
+  const metrics = {
+    bookingsThisMonth,
+    estEmailsThisMonth,
+    totalRows,
+    totalAppointments: aptTotal.count || 0,
+    projectRef: (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace('https://', '').split('.')[0],
+  }
+
   return (
     <SuperAdminView
       tenants={(tenants as Tenant[]) || []}
       aptCounts={countByTenant}
       adminEmail={user.email}
+      metrics={metrics}
     />
   )
 }

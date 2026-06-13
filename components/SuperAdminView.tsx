@@ -8,14 +8,24 @@ import type { Tenant } from '@/lib/supabase/types'
 
 const PLAN_PRICE: Record<string, number> = Object.fromEntries(PLANS.map((p) => [p.id, p.price]))
 
+interface Metrics {
+  bookingsThisMonth: number
+  estEmailsThisMonth: number
+  totalRows: number
+  totalAppointments: number
+  projectRef: string
+}
+
 export default function SuperAdminView({
   tenants,
   aptCounts,
   adminEmail,
+  metrics,
 }: {
   tenants: Tenant[]
   aptCounts: Record<string, number>
   adminEmail: string
+  metrics: Metrics
 }) {
   async function logout() {
     const supabase = createClient()
@@ -111,6 +121,9 @@ export default function SuperAdminView({
           ))}
         </div>
 
+        {/* Tablero de capacidad */}
+        <CapacityPanel metrics={metrics} activeCount={active.length} tenantCount={tenants.length} />
+
         {/* Tabla de tenants */}
         <div style={S.card}>
           <div style={{ fontSize: 10, color: C.muted, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700, marginBottom: 14 }}>
@@ -190,6 +203,124 @@ export default function SuperAdminView({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tablero de capacidad ─────────────────────────────────────
+function CapacityPanel({
+  metrics,
+  activeCount,
+  tenantCount,
+}: {
+  metrics: Metrics
+  activeCount: number
+  tenantCount: number
+}) {
+  const EMAIL_LIMIT = 3000 // Resend free / mes
+  const emailPct = Math.min(100, Math.round((metrics.estEmailsThisMonth / EMAIL_LIMIT) * 100))
+  const emailColor = emailPct >= 90 ? C.red : emailPct >= 70 ? '#E8A84C' : C.green
+
+  const supabaseUrl = `https://supabase.com/dashboard/project/${metrics.projectRef}`
+  const resendUrl = 'https://resend.com/emails'
+  const vercelUrl = 'https://vercel.com/dashboard'
+
+  return (
+    <div style={{ ...S.card, marginBottom: 24 }}>
+      <div
+        style={{
+          fontSize: 10,
+          color: C.muted,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+          fontWeight: 700,
+          marginBottom: 16,
+        }}
+      >
+        Capacidad y límites (plan gratuito)
+      </div>
+
+      {/* Gauge correos */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+          <span style={{ color: C.cream }}>Correos este mes (estimado)</span>
+          <span>
+            <span style={{ color: emailColor, fontWeight: 700 }}>{metrics.estEmailsThisMonth}</span>
+            <span style={{ color: C.muted }}> / {EMAIL_LIMIT.toLocaleString()}</span>
+          </span>
+        </div>
+        <div style={{ height: 8, background: C.bg3, borderRadius: 4 }}>
+          <div
+            style={{
+              height: '100%',
+              width: `${emailPct}%`,
+              background: emailColor,
+              borderRadius: 4,
+              transition: 'width 0.4s',
+            }}
+          />
+        </div>
+        <div style={{ fontSize: 11, color: C.muted, marginTop: 6 }}>
+          {emailPct}% del tope mensual · límite diario 100/día. Estimado = 1 aviso al dueño por cita +
+          confirmación si el cliente dejó correo. Si pasas 70%, considera Resend Pro (~$20/mes).
+        </div>
+      </div>
+
+      {/* Stats rápidos */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
+        {[
+          { l: 'Barberías activas', v: activeCount, hint: `${tenantCount} en total` },
+          { l: 'Citas este mes', v: metrics.bookingsThisMonth, hint: 'genera correos' },
+          { l: 'Citas totales', v: metrics.totalAppointments, hint: 'histórico' },
+          { l: 'Registros en DB', v: metrics.totalRows, hint: 'crece el espacio' },
+        ].map((s) => (
+          <div key={s.l} style={{ background: C.bg3, border: `1px solid ${C.border}`, borderRadius: 8, padding: 14 }}>
+            <div style={{ fontSize: 9, color: C.muted, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 700, marginBottom: 6 }}>
+              {s.l}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.cream }}>{s.v}</div>
+            <div style={{ fontSize: 10, color: C.muted2, marginTop: 2 }}>{s.hint}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Cuándo pagar */}
+      <div
+        style={{
+          background: '#1A1400',
+          border: '1px solid #3D3000',
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, marginBottom: 8, letterSpacing: 1 }}>
+          ⏱ CUÁNDO SUBIR DE PLAN
+        </div>
+        {[
+          ['Vercel Pro ($20/mes)', 'Al cobrar tu 1er cliente (uso comercial + subdominios)'],
+          ['Resend Pro ($20/mes)', 'Si la barra de correos pasa 70% o topas 100/día'],
+          ['Supabase Pro ($25/mes)', 'Con ~10 clientes de pago (respaldos + sin pausas)'],
+        ].map(([k, v]) => (
+          <div key={k} style={{ display: 'flex', gap: 10, fontSize: 12, marginBottom: 4 }}>
+            <span style={{ color: C.cream, fontWeight: 600, minWidth: 165 }}>{k}</span>
+            <span style={{ color: C.muted }}>{v}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Enlaces a uso real */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <a href={resendUrl} target="_blank" rel="noopener noreferrer" className="gh" style={{ ...S.btnSm, textDecoration: 'none' }}>
+          Uso real de correos (Resend) ↗
+        </a>
+        <a href={supabaseUrl} target="_blank" rel="noopener noreferrer" className="gh" style={{ ...S.btnSm, textDecoration: 'none' }}>
+          Uso de base de datos (Supabase) ↗
+        </a>
+        <a href={vercelUrl} target="_blank" rel="noopener noreferrer" className="gh" style={{ ...S.btnSm, textDecoration: 'none' }}>
+          Uso de hosting (Vercel) ↗
+        </a>
       </div>
     </div>
   )
