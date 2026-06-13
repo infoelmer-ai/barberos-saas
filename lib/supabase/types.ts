@@ -23,6 +23,7 @@ export interface Tenant {
   trial_ended_notified: boolean
   deposit_enabled: boolean
   deposit_percent: number
+  whatsapp_enabled: boolean
   created_at: string
   updated_at: string
 }

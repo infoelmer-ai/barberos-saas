@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendBookingConfirmation, sendOwnerNotification } from '@/lib/email/resend'
+import { sendWhatsAppTemplate } from '@/lib/whatsapp/send'
 
 // GET /api/appointments?phone=...&tenant_id=...
 export async function GET(req: Request) {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     // Validar tenant activo
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, status, name, owner_email, slug, brand_color, plan')
+      .select('id, status, name, owner_email, slug, brand_color, plan, whatsapp_enabled')
       .eq('id', body.tenant_id)
       .single()
     if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 })
@@ -116,9 +117,24 @@ export async function POST(req: Request) {
       await Promise.allSettled([
         sendBookingConfirmation(emailData),
         sendOwnerNotification(emailData),
+        // WhatsApp al cliente (no-op hasta conectar la cuenta de Meta)
+        tenant.whatsapp_enabled !== false
+          ? sendWhatsAppTemplate({
+              to: body.client_phone,
+              template: 'appointment_confirmation',
+              params: [
+                emailData.clientName,
+                tenant.name,
+                service.name,
+                body.date,
+                emailData.time,
+                emailData.barberName,
+              ],
+            })
+          : Promise.resolve(),
       ])
     } catch {
-      /* correos best-effort */
+      /* notificaciones best-effort */
     }
 
     return NextResponse.json({ appointment })

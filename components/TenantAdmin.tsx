@@ -11,6 +11,7 @@ import ServiceManager from './ServiceManager'
 import AdvancedAnalytics from './AdvancedAnalytics'
 import BrandingManager from './BrandingManager'
 import DepositManager from './DepositManager'
+import NotificationsManager from './NotificationsManager'
 
 interface Props {
   tenant: Tenant
@@ -248,7 +249,7 @@ export default function TenantAdmin({
               { v: 'citas', l: 'Citas' },
               { v: 'barberos', l: 'Barberos' },
               { v: 'servicios', l: 'Servicios' },
-              { v: 'pagos', l: 'Pagos' },
+              { v: 'pagos', l: 'Ajustes' },
               { v: 'marca', l: 'Marca' },
             ] as const
           ).map((x, i, arr) => (
@@ -321,7 +322,10 @@ export default function TenantAdmin({
         )}
 
         {tab === 'pagos' && (
-          <DepositManager tenant={tenant} services={services} demoMode={demoMode} />
+          <>
+            <DepositManager tenant={tenant} services={services} demoMode={demoMode} />
+            <NotificationsManager tenant={tenant} demoMode={demoMode} />
+          </>
         )}
 
         {tab === 'marca' &&

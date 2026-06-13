@@ -28,6 +28,7 @@ CREATE TABLE tenants (
   trial_ended_notified BOOLEAN DEFAULT false,
   deposit_enabled BOOLEAN DEFAULT false,
   deposit_percent INTEGER DEFAULT 50,
+  whatsapp_enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
