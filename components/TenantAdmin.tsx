@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { C } from '@/lib/constants'
+import { C, PLANS } from '@/lib/constants'
 import { S } from '@/lib/styles'
 import type { Barber, Profile, Service, Tenant, Appointment } from '@/lib/supabase/types'
 import BarberManager from './BarberManager'
@@ -33,6 +33,7 @@ export default function TenantAdmin({
   >('dashboard')
   const [barbers, setBarbers] = useState(barbersInit)
   const [services, setServices] = useState(servicesInit)
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const plan = tenant.plan
   const hasAnalytics = plan === 'pro' || plan === 'business'
   const hasWhiteLabel = plan === 'business'
@@ -150,6 +151,21 @@ export default function TenantAdmin({
                   ? 'Pago pendiente'
                   : 'Cancelada'}
           </span>
+          {plan !== 'business' && (
+            <button
+              style={{
+                ...S.btnSm,
+                fontSize: 10,
+                color: C.bg,
+                background: `linear-gradient(135deg,${C.gold},${C.goldLt})`,
+                border: 'none',
+                fontWeight: 700,
+              }}
+              onClick={() => setShowUpgrade(true)}
+            >
+              ⬆ Mejorar plan
+            </button>
+          )}
           <Link
             href={`/t/${tenant.slug}`}
             target="_blank"
@@ -204,6 +220,14 @@ export default function TenantAdmin({
       )}
 
       <div style={S.wrap}>
+        {showUpgrade ? (
+          <UpgradePanel
+            currentPlan={plan}
+            demoMode={demoMode}
+            onClose={() => setShowUpgrade(false)}
+          />
+        ) : (
+          <>
         {/* Tabs */}
         <div
           style={{
@@ -276,7 +300,7 @@ export default function TenantAdmin({
               tenantSlug={tenant.slug}
             />
           ) : (
-            <AnalyticsUpsell />
+            <AnalyticsUpsell onUpgrade={() => setShowUpgrade(true)} />
           ))}
 
         {tab === 'citas' && (
@@ -298,15 +322,17 @@ export default function TenantAdmin({
           (hasWhiteLabel ? (
             <BrandingManager tenant={tenant} demoMode={demoMode} />
           ) : (
-            <WhiteLabelUpsell />
+            <WhiteLabelUpsell onUpgrade={() => setShowUpgrade(true)} />
           ))}
+          </>
+        )}
       </div>
     </div>
   )
 }
 
 // ─── Upsell de marca blanca (planes < Business) ───────────────
-function WhiteLabelUpsell() {
+function WhiteLabelUpsell({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div style={{ ...S.card, textAlign: 'center', padding: '48px 24px' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>🏷️</div>
@@ -317,12 +343,15 @@ function WhiteLabelUpsell() {
         Pon tu propio logo y color en tu página de reservas. Tus clientes verán tu marca, sin
         mención a BarberOS. Disponible en el plan <strong style={{ color: C.cream }}>Business</strong>.
       </p>
+      <button style={S.btnG} onClick={onUpgrade}>
+        ⬆ Mejorar a Business
+      </button>
     </div>
   )
 }
 
 // ─── Upsell de analíticas (plan Starter) ──────────────────────
-function AnalyticsUpsell() {
+function AnalyticsUpsell({ onUpgrade }: { onUpgrade: () => void }) {
   return (
     <div style={{ ...S.card, textAlign: 'center', padding: '48px 24px' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>📈</div>
@@ -362,6 +391,166 @@ function AnalyticsUpsell() {
           )
         )}
       </div>
+      <button style={{ ...S.btnG, marginTop: 22 }} onClick={onUpgrade}>
+        ⬆ Mejorar mi plan
+      </button>
+    </div>
+  )
+}
+
+// ─── Panel de mejora de plan ──────────────────────────────────
+function UpgradePanel({
+  currentPlan,
+  demoMode,
+  onClose,
+}: {
+  currentPlan: string
+  demoMode: boolean
+  onClose: () => void
+}) {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function changePlan(plan: string) {
+    if (demoMode) return
+    setBusy(plan)
+    setError(null)
+    const res = await fetch('/api/plan', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ plan }),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error || 'No se pudo cambiar el plan')
+      setBusy(null)
+      return
+    }
+    // Recargar para reflejar las nuevas funciones desbloqueadas
+    window.location.reload()
+  }
+
+  const order: Record<string, number> = { starter: 0, pro: 1, business: 2 }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <h2 style={S.ttl}>Elige tu plan</h2>
+          <p style={{ ...S.sub, marginBottom: 0 }}>
+            El cambio desbloquea las funciones al instante. Durante tu prueba no se cobra nada.
+          </p>
+        </div>
+        <button className="gh" style={S.btnGh} onClick={onClose}>
+          ← Volver
+        </button>
+      </div>
+
+      {error && (
+        <div
+          style={{
+            background: '#2B1010',
+            border: `1px solid ${C.red}44`,
+            color: C.red,
+            padding: '10px 14px',
+            borderRadius: 6,
+            marginBottom: 16,
+            fontSize: 12,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+        {PLANS.map((p) => {
+          const isCurrent = p.id === currentPlan
+          const isUpgrade = order[p.id] > order[currentPlan]
+          const features = [
+            p.barbers >= 99 ? 'Barberos ilimitados' : `Hasta ${p.barbers} barberos`,
+            `${p.locations > 1 ? 'ubicaciones' : 'ubicación'}: ${p.locations}`,
+            'Agendamiento + panel',
+            ...(p.analytics ? ['Analíticas avanzadas'] : []),
+            ...(p.whiteLabel ? ['Marca blanca'] : []),
+          ]
+          return (
+            <div
+              key={p.id}
+              style={{
+                background: isCurrent ? `${C.gold}0C` : C.bg2,
+                border: `2px solid ${isCurrent ? C.gold : C.border}`,
+                borderRadius: 10,
+                padding: 24,
+                position: 'relative',
+              }}
+            >
+              {isCurrent && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -11,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: C.gold,
+                    color: C.bg,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: 1.5,
+                    textTransform: 'uppercase',
+                    padding: '3px 12px',
+                    borderRadius: 20,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Tu plan actual
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: C.muted, letterSpacing: 2, textTransform: 'uppercase', fontWeight: 600, marginBottom: 8 }}>
+                {p.name}
+              </div>
+              <div style={{ fontSize: 38, fontWeight: 700, color: isCurrent ? C.gold : C.cream, marginBottom: 12 }}>
+                ${p.price}
+                <span style={{ fontSize: 13, color: C.muted, fontWeight: 400 }}>/mes</span>
+              </div>
+              <div style={{ display: 'grid', gap: 7, marginBottom: 20 }}>
+                {features.map((f) => (
+                  <div key={f} style={{ display: 'flex', gap: 7, fontSize: 12, alignItems: 'center' }}>
+                    <span style={{ color: C.green }}>✓</span>
+                    <span style={{ color: C.cream }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              {isCurrent ? (
+                <button style={{ ...S.btnGh, width: '100%', cursor: 'default', opacity: 0.6 }} disabled>
+                  Plan actual
+                </button>
+              ) : (
+                <button
+                  style={{
+                    ...(isUpgrade ? S.btnG : S.btnGh),
+                    width: '100%',
+                    opacity: busy ? 0.5 : 1,
+                  }}
+                  onClick={() => changePlan(p.id)}
+                  disabled={!!busy || demoMode}
+                >
+                  {busy === p.id ? 'Cambiando...' : isUpgrade ? `Mejorar a ${p.name}` : `Cambiar a ${p.name}`}
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {demoMode ? (
+        <p style={{ fontSize: 11, color: C.muted2, marginTop: 18, textAlign: 'center' }}>
+          En modo demo no se puede cambiar de plan.
+        </p>
+      ) : (
+        <p style={{ fontSize: 11, color: C.muted, marginTop: 18, textAlign: 'center' }}>
+          El plan que elijas es el que se cobrará al terminar tu prueba de 14 días.
+        </p>
+      )}
     </div>
   )
 }
