@@ -55,9 +55,13 @@ export async function GET(req: Request) {
       }
     } else if (daysLeft <= 1 && !t.trial_reminder_1d_sent) {
       await sendTrialReminder({ ownerEmail: t.owner_email, ownerName: firstName, tenantName: t.name, daysLeft: 1, adminUrl })
-      await admin.from('tenants').update({ trial_reminder_1d_sent: true }).eq('id', t.id)
+      // Marca también el de 3 días para no mandarlo después
+      await admin
+        .from('tenants')
+        .update({ trial_reminder_1d_sent: true, trial_reminder_3d_sent: true })
+        .eq('id', t.id)
       summary.reminders++
-    } else if (daysLeft <= 3 && !t.trial_reminder_3d_sent) {
+    } else if (daysLeft <= 3 && !t.trial_reminder_3d_sent && !t.trial_reminder_1d_sent) {
       await sendTrialReminder({ ownerEmail: t.owner_email, ownerName: firstName, tenantName: t.name, daysLeft, adminUrl })
       await admin.from('tenants').update({ trial_reminder_3d_sent: true }).eq('id', t.id)
       summary.reminders++
