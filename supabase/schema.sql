@@ -131,24 +131,17 @@ CREATE POLICY "appointments_tenant_isolation" ON appointments
 -- ═══════════════════════════════════════════════════════════════════
 -- Acceso público para reservas (sin auth)
 -- ═══════════════════════════════════════════════════════════════════
--- La página pública /t/[slug] necesita leer barbers/services/citas
--- sin estar autenticada. Usamos el rol "anon" pero con políticas que
--- solo permiten leer (no modificar) y solo del tenant correspondiente.
-
-CREATE POLICY "public_read_tenants_by_slug" ON tenants
-  FOR SELECT TO anon USING (true);
-
-CREATE POLICY "public_read_active_barbers" ON barbers
-  FOR SELECT TO anon USING (active = true);
-
-CREATE POLICY "public_read_active_services" ON services
-  FOR SELECT TO anon USING (active = true);
-
-CREATE POLICY "public_read_appointments_for_availability" ON appointments
-  FOR SELECT TO anon USING (status = 'confirmed');
-
--- Para crear citas públicas usamos el service role desde la API route
--- (bypasses RLS). No damos INSERT al rol anon directamente.
+-- IMPORTANTE: NO damos políticas al rol "anon".
+--
+-- La página pública /t/[slug] y todas las API routes leen/escriben datos
+-- usando el SERVICE ROLE (server-side, llave secreta) que ignora RLS. El
+-- navegador NUNCA consulta Supabase directamente para datos (solo para
+-- auth). Por eso no se necesitan políticas anon.
+--
+-- Dar lectura al rol anon sería una FUGA: su llave es pública (va en el
+-- bundle) y expondría owner_email, Stripe IDs y PII de clientes a
+-- cualquiera. Mantener RLS habilitado SIN políticas anon = el anon obtiene
+-- cero filas. Ver migrations/001_fix_rls_leak.sql.
 
 -- ═══════════════════════════════════════════════════════════════════
 -- Seed inicial: datos demo para un tenant de prueba

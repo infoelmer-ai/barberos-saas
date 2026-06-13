@@ -101,7 +101,7 @@ export default function Landing() {
             <Link href="/onboard" style={{ ...S.btnG, textDecoration: 'none' }}>
               Registrar mi Barbería →
             </Link>
-            <Link href="/?tenant=demo" style={{ ...S.btnGh, textDecoration: 'none' }} className="gh">
+            <Link href="/t/demo" style={{ ...S.btnGh, textDecoration: 'none' }} className="gh">
               Ver Demo en Vivo
             </Link>
           </div>

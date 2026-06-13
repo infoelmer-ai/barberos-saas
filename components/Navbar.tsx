@@ -8,8 +8,8 @@ import { S } from '@/lib/styles'
 const LINKS = [
   { href: '/', label: 'Inicio' },
   { href: '/onboard', label: 'Registrar Barbería' },
-  { href: '/superadmin', label: 'Super Admin' },
-  { href: '/?tenant=demo', label: 'Demo Barbería' },
+  { href: '/t/demo', label: 'Ver Demo' },
+  { href: '/t/demo/admin', label: 'Panel Demo' },
 ]
 
 export default function Navbar() {
@@ -50,7 +50,7 @@ export default function Navbar() {
       </Link>
       <div style={{ display: 'flex', gap: 6 }}>
         {LINKS.map((link) => {
-          const active = pathname === link.href.split('?')[0]
+          const active = pathname === link.href
           return (
             <Link
               key={link.href}

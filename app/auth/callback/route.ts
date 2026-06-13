@@ -1,33 +1,52 @@
 import { NextResponse } from 'next/server'
+import type { EmailOtpType } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Maneja el callback del magic link de Supabase.
-// 1. Intercambia el code por una sesión
-// 2. Asegura que exista un profile para el usuario (vinculado al tenant por email)
-// 3. Redirige al admin del tenant del owner
+// Supabase puede mandar el enlace en dos formatos según configuración:
+//   1. PKCE:  ?code=...            → exchangeCodeForSession
+//   2. OTP:   ?token_hash=&type=   → verifyOtp
+// Manejamos ambos para que el login sea robusto.
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash')
+  const type = searchParams.get('type') as EmailOtpType | null
   const next = searchParams.get('next')
 
-  if (!code) {
+  const supabase = await createClient()
+
+  let userId: string | undefined
+  let email: string | undefined
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error || !data.user) {
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(error?.message || 'invalid')}`
+      )
+    }
+    userId = data.user.id
+    email = data.user.email ?? undefined
+  } else if (tokenHash && type) {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
+    if (error || !data.user) {
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(error?.message || 'invalid')}`
+      )
+    }
+    userId = data.user.id
+    email = data.user.email ?? undefined
+  } else {
     return NextResponse.redirect(`${origin}/login?error=no_code`)
   }
 
-  const supabase = await createClient()
-  const { data: session, error } = await supabase.auth.exchangeCodeForSession(code)
-  if (error || !session.user) {
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error?.message || 'invalid')}`)
-  }
-
-  const userId = session.user.id
-  const email = session.user.email
-  if (!email) {
+  if (!userId || !email) {
     return NextResponse.redirect(`${origin}/login?error=no_email`)
   }
 
-  // Buscar tenant por owner_email y crear profile si no existe
+  // Vincular usuario → tenant por owner_email
   const admin = createAdminClient()
   const { data: tenant } = await admin
     .from('tenants')
@@ -36,21 +55,17 @@ export async function GET(request: Request) {
     .maybeSingle()
 
   if (tenant) {
-    // Upsert del profile vinculando al tenant
     await admin.from('profiles').upsert(
       {
         id: userId,
         tenant_id: tenant.id,
         role: 'owner',
-        full_name: session.user.user_metadata?.full_name || null,
       },
       { onConflict: 'id' }
     )
-
-    // Si nos pasaron ?next, respetarlo; sino mandar al admin del tenant
     return NextResponse.redirect(`${origin}${next || `/t/${tenant.slug}/admin`}`)
   }
 
-  // Si no encontramos tenant para este email, mandar al inicio con aviso
-  return NextResponse.redirect(`${origin}/?error=no_tenant_for_email`)
+  // Sin tenant para este correo → puede ser super-admin (allowlist) o usuario sin barbería
+  return NextResponse.redirect(`${origin}${next || '/'}?error=no_tenant_for_email`)
 }

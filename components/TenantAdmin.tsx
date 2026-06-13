@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { C } from '@/lib/constants'
 import { S } from '@/lib/styles'
 import type { Barber, Profile, Service, Tenant, Appointment } from '@/lib/supabase/types'
+import BarberManager from './BarberManager'
+import ServiceManager from './ServiceManager'
 
 interface Props {
   tenant: Tenant
@@ -19,12 +21,14 @@ interface Props {
 export default function TenantAdmin({
   tenant,
   profile,
-  barbers,
-  services,
+  barbers: barbersInit,
+  services: servicesInit,
   appointments,
   demoMode = false,
 }: Props) {
   const [tab, setTab] = useState<'dashboard' | 'citas' | 'barberos' | 'servicios'>('dashboard')
+  const [barbers, setBarbers] = useState(barbersInit)
+  const [services, setServices] = useState(servicesInit)
 
   async function logout() {
     const supabase = createClient()
@@ -182,9 +186,10 @@ export default function TenantAdmin({
               style={{
                 padding: '9px 22px',
                 background: tab === x.v ? `${C.gold}14` : C.bg2,
-                borderBottom: `2px solid ${tab === x.v ? C.gold : C.border}`,
-                border: 'none',
+                borderTop: 'none',
+                borderLeft: 'none',
                 borderRight: i < 3 ? `1px solid ${C.border}` : 'none',
+                borderBottom: `2px solid ${tab === x.v ? C.gold : C.border}`,
                 color: tab === x.v ? C.gold : C.muted,
                 cursor: 'pointer',
                 fontSize: 11,
@@ -221,8 +226,12 @@ export default function TenantAdmin({
           />
         )}
 
-        {tab === 'barberos' && <BarberosTab barbers={barbers} byBarber={byBarber} />}
-        {tab === 'servicios' && <ServiciosTab services={services} bySvc={bySvc} />}
+        {tab === 'barberos' && (
+          <BarberManager barbers={barbers} setBarbers={setBarbers} demoMode={demoMode} />
+        )}
+        {tab === 'servicios' && (
+          <ServiceManager services={services} setServices={setServices} demoMode={demoMode} />
+        )}
       </div>
     </div>
   )
@@ -597,140 +606,4 @@ function CitasTable({
   )
 }
 
-// ─── Barberos tab ─────────────────────────────────────────────
-function BarberosTab({
-  barbers,
-  byBarber,
-}: {
-  barbers: Barber[]
-  byBarber: (Barber & { count: number; rev: number })[]
-}) {
-  return (
-    <div style={S.card}>
-      <div
-        style={{
-          fontSize: 10,
-          color: C.muted,
-          letterSpacing: 2,
-          textTransform: 'uppercase',
-          fontWeight: 700,
-          marginBottom: 14,
-        }}
-      >
-        Barberos ({barbers.length})
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 14 }}>
-        {byBarber.map((b) => (
-          <div
-            key={b.id}
-            style={{
-              background: C.bg3,
-              border: `1px solid ${C.border}`,
-              borderRadius: 9,
-              padding: 18,
-              textAlign: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                margin: '0 auto 12px',
-                background: `linear-gradient(135deg,${b.color},${b.color}55)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 16,
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
-              {b.initials || b.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: C.cream, marginBottom: 4 }}>
-              {b.name}
-            </div>
-            <div style={{ fontSize: 10, color: C.muted, marginBottom: 10 }}>
-              {b.specialty || '—'}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: 11 }}>
-              <div>
-                <div style={{ color: C.gold, fontWeight: 700, fontSize: 16 }}>
-                  ${b.rev.toFixed(0)}
-                </div>
-                <div style={{ color: C.muted, fontSize: 9 }}>Ingresos</div>
-              </div>
-              <div>
-                <div style={{ color: C.cream, fontWeight: 700, fontSize: 16 }}>{b.count}</div>
-                <div style={{ color: C.muted, fontSize: 9 }}>Citas</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <p style={{ fontSize: 11, color: C.muted2, marginTop: 18, textAlign: 'center' }}>
-        Para agregar o editar barberos, contacta soporte (próximamente desde este panel).
-      </p>
-    </div>
-  )
-}
 
-// ─── Servicios tab ────────────────────────────────────────────
-function ServiciosTab({
-  services,
-  bySvc,
-}: {
-  services: Service[]
-  bySvc: (Service & { count: number; rev: number })[]
-}) {
-  return (
-    <div style={S.card}>
-      <div
-        style={{
-          fontSize: 10,
-          color: C.muted,
-          letterSpacing: 2,
-          textTransform: 'uppercase',
-          fontWeight: 700,
-          marginBottom: 14,
-        }}
-      >
-        Servicios ({services.length})
-      </div>
-      <div style={{ display: 'grid', gap: 10 }}>
-        {bySvc.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              background: C.bg3,
-              border: `1px solid ${C.border}`,
-              borderRadius: 9,
-              padding: '14px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontSize: 28 }}>{s.emoji || '✂️'}</span>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: C.cream }}>{s.name}</div>
-                <div style={{ fontSize: 11, color: C.muted }}>{s.duration_min} min</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: C.gold }}>${s.price}</div>
-              <div style={{ fontSize: 10, color: C.muted }}>
-                ${s.rev.toFixed(0)} · {s.count} citas
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <p style={{ fontSize: 11, color: C.muted2, marginTop: 18, textAlign: 'center' }}>
-        Para editar precios y servicios, contacta soporte (próximamente desde este panel).
-      </p>
-    </div>
-  )
-}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendBookingConfirmation, sendOwnerNotification } from '@/lib/email/resend'
 
 // GET /api/appointments?phone=...&tenant_id=...
 export async function GET(req: Request) {
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     // Validar tenant activo
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, status')
+      .select('id, status, name, owner_email, slug')
       .eq('id', body.tenant_id)
       .single()
     if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 })
@@ -89,6 +90,35 @@ export async function POST(req: Request) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Enviar correos (no-op si no hay RESEND_API_KEY). No bloquea ni rompe la reserva.
+    try {
+      const { data: barber } = await supabase
+        .from('barbers')
+        .select('name')
+        .eq('id', body.barber_id)
+        .single()
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const emailData = {
+        tenantName: tenant.name,
+        clientName: body.client_name.trim(),
+        clientEmail: body.client_email?.trim() || null,
+        ownerEmail: tenant.owner_email,
+        barberName: barber?.name || 'Barbero',
+        serviceName: service.name,
+        date: body.date,
+        time: String(body.time).slice(0, 5),
+        total: Number(service.price),
+        bookingUrl: `${appUrl}/t/${tenant.slug}`,
+      }
+      await Promise.allSettled([
+        sendBookingConfirmation(emailData),
+        sendOwnerNotification(emailData),
+      ])
+    } catch {
+      /* correos best-effort */
+    }
+
     return NextResponse.json({ appointment })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Error desconocido'

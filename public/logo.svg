@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200">
+  <defs>
+    <linearGradient id="poleGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96D"/>
+      <stop offset="100%" stop-color="#8B7030"/>
+    </linearGradient>
+    <linearGradient id="textGold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F0EAD8"/>
+      <stop offset="60%" stop-color="#E8C96D"/>
+      <stop offset="100%" stop-color="#C9A84C"/>
+    </linearGradient>
+    <linearGradient id="stripe1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E05252"/>
+      <stop offset="100%" stop-color="#8B2A2A"/>
+    </linearGradient>
+    <linearGradient id="stripe2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5A9BCC"/>
+      <stop offset="100%" stop-color="#2A5B8B"/>
+    </linearGradient>
+    <filter id="goldShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feFlood flood-color="#000" flood-opacity="0.4"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Barber pole icon -->
+  <g transform="translate(40, 30)" filter="url(#goldShadow)">
+    <!-- Top cap -->
+    <rect x="-5" y="0" width="60" height="12" rx="2" fill="url(#poleGold)"/>
+    <!-- White cylinder background -->
+    <rect x="5" y="14" width="40" height="110" rx="2" fill="#F0EAD8"/>
+    <!-- Diagonal stripes (barbershop) -->
+    <g clip-path="inset(14px 5px 0 5px round 2px)">
+      <path d="M 5 134 L 45 14" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 124 L 45 4" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 114 L 45 -6" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 104 L 45 -16" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 94 L 45 -26" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 84 L 45 -36" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 74 L 45 -46" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 64 L 45 -56" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 54 L 45 -66" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 44 L 45 -76" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 34 L 45 -86" stroke="url(#stripe1)" stroke-width="10" stroke-linecap="square"/>
+      <path d="M 5 24 L 45 -96" stroke="url(#stripe2)" stroke-width="10" stroke-linecap="square"/>
+    </g>
+    <!-- Bottom cap -->
+    <rect x="-5" y="126" width="60" height="12" rx="2" fill="url(#poleGold)"/>
+    <!-- Tip -->
+    <rect x="20" y="138" width="10" height="14" rx="1" fill="url(#poleGold)"/>
+    <circle cx="25" cy="156" r="4" fill="url(#poleGold)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(150, 0)">
+    <text x="0" y="105"
+          font-family="'Playfair Display', 'Georgia', serif"
+          font-weight="800"
+          font-size="72"
+          fill="url(#textGold)"
+          letter-spacing="-1">BarberOS</text>
+    <text x="4" y="135"
+          font-family="'Montserrat', 'Arial', sans-serif"
+          font-weight="600"
+          font-size="11"
+          fill="#7A7060"
+          letter-spacing="8">SAAS · PLATAFORMA PARA BARBERÍAS</text>
+  </g>
+</svg>

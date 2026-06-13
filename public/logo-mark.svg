@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="poleGold2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C96D"/>
+      <stop offset="100%" stop-color="#8B7030"/>
+    </linearGradient>
+    <linearGradient id="stripeR" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E05252"/>
+      <stop offset="100%" stop-color="#8B2A2A"/>
+    </linearGradient>
+    <linearGradient id="stripeB" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5A9BCC"/>
+      <stop offset="100%" stop-color="#2A5B8B"/>
+    </linearGradient>
+    <radialGradient id="bgGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1C1915"/>
+      <stop offset="100%" stop-color="#0A0906"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="0" y="0" width="200" height="200" rx="36" fill="url(#bgGold)"/>
+  <rect x="2" y="2" width="196" height="196" rx="34" fill="none" stroke="#C9A84C" stroke-width="2" opacity="0.4"/>
+
+  <!-- Barber pole -->
+  <g transform="translate(72, 28)">
+    <rect x="-6" y="0" width="70" height="14" rx="3" fill="url(#poleGold2)"/>
+    <rect x="6" y="16" width="46" height="128" rx="3" fill="#F0EAD8"/>
+    <g clip-path="inset(16px 6px 0 6px round 3px)">
+      <path d="M 6 156 L 52 16" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 144 L 52 4" stroke="url(#stripeB)" stroke-width="12"/>
+      <path d="M 6 132 L 52 -8" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 120 L 52 -20" stroke="url(#stripeB)" stroke-width="12"/>
+      <path d="M 6 108 L 52 -32" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 96 L 52 -44" stroke="url(#stripeB)" stroke-width="12"/>
+      <path d="M 6 84 L 52 -56" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 72 L 52 -68" stroke="url(#stripeB)" stroke-width="12"/>
+      <path d="M 6 60 L 52 -80" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 48 L 52 -92" stroke="url(#stripeB)" stroke-width="12"/>
+      <path d="M 6 36 L 52 -104" stroke="url(#stripeR)" stroke-width="12"/>
+      <path d="M 6 24 L 52 -116" stroke="url(#stripeB)" stroke-width="12"/>
+    </g>
+    <rect x="-6" y="146" width="70" height="14" rx="3" fill="url(#poleGold2)"/>
+    <rect x="24" y="160" width="12" height="16" rx="1" fill="url(#poleGold2)"/>
+    <circle cx="30" cy="180" r="5" fill="url(#poleGold2)"/>
+  </g>
+</svg>

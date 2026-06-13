@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendWelcome } from '@/lib/email/resend'
 
 export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature')
@@ -33,6 +34,23 @@ export async function POST(req: Request) {
               status: 'trial',
             })
             .eq('id', tenantId)
+
+          // Correo de bienvenida (no-op si no hay RESEND_API_KEY)
+          const { data: t } = await supabase
+            .from('tenants')
+            .select('name, owner_email, owner_name, slug')
+            .eq('id', tenantId)
+            .single()
+          if (t) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+            await sendWelcome({
+              ownerEmail: t.owner_email,
+              ownerName: (t.owner_name || '').split(' ')[0] || 'barbero',
+              tenantName: t.name,
+              bookingUrl: `${appUrl}/t/${t.slug}`,
+              adminUrl: `${appUrl}/t/${t.slug}/admin`,
+            })
+          }
         }
         break
       }
