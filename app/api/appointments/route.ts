@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     // Validar tenant activo
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('id, status, name, owner_email, slug')
+      .select('id, status, name, owner_email, slug, brand_color, plan')
       .eq('id', body.tenant_id)
       .single()
     if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 })
@@ -110,6 +110,8 @@ export async function POST(req: Request) {
         time: String(body.time).slice(0, 5),
         total: Number(service.price),
         bookingUrl: `${appUrl}/t/${tenant.slug}`,
+        brandColor: tenant.brand_color,
+        whiteLabel: tenant.plan === 'business',
       }
       await Promise.allSettled([
         sendBookingConfirmation(emailData),

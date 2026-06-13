@@ -11,16 +11,18 @@ const BG = '#13110E'
 const CREAM = '#F0EAD8'
 const MUTED = '#7A7060'
 
-function shell(title: string, body: string) {
+function shell(title: string, body: string, opts: { accent?: string; footer?: string } = {}) {
+  const accent = opts.accent || GOLD
+  const footer = opts.footer || 'Enviado por BarberOS · Sistema de agendamiento para barberías'
   return `<!doctype html><html><body style="margin:0;background:#0A0906;font-family:Arial,Helvetica,sans-serif;padding:24px">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:${BG};border:1px solid #2A2520;border-radius:12px;overflow:hidden">
     <tr><td style="padding:24px 28px;border-bottom:1px solid #2A2520">
       <span style="font-size:22px">💈</span>
-      <span style="color:${GOLD};font-size:18px;font-weight:bold;vertical-align:middle;margin-left:6px">${title}</span>
+      <span style="color:${accent};font-size:18px;font-weight:bold;vertical-align:middle;margin-left:6px">${title}</span>
     </td></tr>
     <tr><td style="padding:28px;color:${CREAM};font-size:14px;line-height:1.7">${body}</td></tr>
     <tr><td style="padding:16px 28px;border-top:1px solid #2A2520;color:${MUTED};font-size:11px">
-      Enviado por BarberOS · Sistema de agendamiento para barberías
+      ${footer}
     </td></tr>
   </table></body></html>`
 }
@@ -40,6 +42,8 @@ interface BookingData {
   time: string
   total: number
   bookingUrl: string
+  brandColor?: string | null
+  whiteLabel?: boolean
 }
 
 // Confirmación al cliente que reservó
@@ -54,13 +58,17 @@ export async function sendBookingConfirmation(d: BookingData) {
       ${row('⏰ Hora', d.time)}
       ${row('💵 Total', '$' + d.total.toFixed(2))}
     </table>
-    <p style="margin:0;color:${MUTED};font-size:12px">Para consultar o cancelar tu cita, usa tu número de teléfono en <a href="${d.bookingUrl}" style="color:${GOLD}">la página de la barbería</a>. Recuerda: cancela con 24h de anticipación para no generar cargo.</p>`
+    <p style="margin:0;color:${MUTED};font-size:12px">Para consultar o cancelar tu cita, usa tu número de teléfono en <a href="${d.bookingUrl}" style="color:${d.brandColor || GOLD}">la página de la barbería</a>. Recuerda: cancela con 24h de anticipación para no generar cargo.</p>`
+  // Para barberías con marca blanca, el correo va sin mención a BarberOS.
+  const footer = d.whiteLabel
+    ? `Enviado por ${d.tenantName}`
+    : 'Enviado por BarberOS · Sistema de agendamiento para barberías'
   try {
     await resend.emails.send({
       from: FROM,
       to: d.clientEmail,
       subject: `Cita confirmada en ${d.tenantName} — ${d.date} ${d.time}`,
-      html: shell('Cita Confirmada', body),
+      html: shell('Cita Confirmada', body, { accent: d.brandColor || GOLD, footer }),
     })
   } catch {
     // No romper el flujo de reserva si el correo falla

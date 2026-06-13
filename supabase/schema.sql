@@ -19,6 +19,8 @@ CREATE TABLE tenants (
   owner_email TEXT NOT NULL,
   owner_name TEXT,
   owner_phone TEXT,
+  logo_url TEXT,
+  brand_color TEXT DEFAULT '#C9A84C',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -9,6 +9,7 @@ import type { Barber, Profile, Service, Tenant, Appointment } from '@/lib/supaba
 import BarberManager from './BarberManager'
 import ServiceManager from './ServiceManager'
 import AdvancedAnalytics from './AdvancedAnalytics'
+import BrandingManager from './BrandingManager'
 
 interface Props {
   tenant: Tenant
@@ -27,13 +28,14 @@ export default function TenantAdmin({
   appointments,
   demoMode = false,
 }: Props) {
-  const [tab, setTab] = useState<'dashboard' | 'analytics' | 'citas' | 'barberos' | 'servicios'>(
-    'dashboard'
-  )
+  const [tab, setTab] = useState<
+    'dashboard' | 'analytics' | 'citas' | 'barberos' | 'servicios' | 'marca'
+  >('dashboard')
   const [barbers, setBarbers] = useState(barbersInit)
   const [services, setServices] = useState(servicesInit)
   const plan = tenant.plan
   const hasAnalytics = plan === 'pro' || plan === 'business'
+  const hasWhiteLabel = plan === 'business'
 
   async function logout() {
     const supabase = createClient()
@@ -184,6 +186,7 @@ export default function TenantAdmin({
               { v: 'citas', l: 'Citas' },
               { v: 'barberos', l: 'Barberos' },
               { v: 'servicios', l: 'Servicios' },
+              { v: 'marca', l: 'Marca' },
             ] as const
           ).map((x, i, arr) => (
             <button
@@ -206,7 +209,7 @@ export default function TenantAdmin({
               }}
             >
               {x.l}
-              {x.v === 'analytics' && plan === 'starter' && (
+              {((x.v === 'analytics' && !hasAnalytics) || (x.v === 'marca' && !hasWhiteLabel)) && (
                 <span style={{ marginLeft: 5, fontSize: 9 }}>🔒</span>
               )}
             </button>
@@ -253,7 +256,30 @@ export default function TenantAdmin({
         {tab === 'servicios' && (
           <ServiceManager services={services} setServices={setServices} demoMode={demoMode} />
         )}
+
+        {tab === 'marca' &&
+          (hasWhiteLabel ? (
+            <BrandingManager tenant={tenant} demoMode={demoMode} />
+          ) : (
+            <WhiteLabelUpsell />
+          ))}
       </div>
+    </div>
+  )
+}
+
+// ─── Upsell de marca blanca (planes < Business) ───────────────
+function WhiteLabelUpsell() {
+  return (
+    <div style={{ ...S.card, textAlign: 'center', padding: '48px 24px' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🏷️</div>
+      <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, color: C.gold, marginBottom: 10 }}>
+        Marca blanca
+      </h3>
+      <p style={{ color: C.muted, fontSize: 14, maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.7 }}>
+        Pon tu propio logo y color en tu página de reservas. Tus clientes verán tu marca, sin
+        mención a BarberOS. Disponible en el plan <strong style={{ color: C.cream }}>Business</strong>.
+      </p>
     </div>
   )
 }

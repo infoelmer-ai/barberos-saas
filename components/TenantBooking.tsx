@@ -6,6 +6,10 @@ import { S } from '@/lib/styles'
 import { fmtDate, getAvailableSlots, pad2 } from '@/lib/utils'
 import type { Barber, Service, Tenant } from '@/lib/supabase/types'
 
+// Botón primario tematizado con el color de marca (variable CSS --brand,
+// definida en el contenedor raíz a partir de tenant.brand_color).
+const btnBrand = { ...S.btnG, background: 'var(--brand)', color: '#fff' }
+
 type ServiceSlim = { duration_min: number; name: string; emoji: string | null }
 
 interface AppointmentLite {
@@ -148,33 +152,44 @@ export default function TenantBooking({
     }))
   }
 
+  const brand = tenant.brand_color || C.gold
+  const logoUrl = tenant.logo_url
+  const isBusiness = tenant.plan === 'business'
+
   return (
-    <div style={S.app}>
+    <div style={{ ...S.app, ['--brand' as string]: brand } as React.CSSProperties}>
       {/* Header del tenant */}
       <header style={S.hdr}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 26 }}>💈</span>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={tenant.name} style={{ height: 38, maxWidth: 120, objectFit: 'contain' }} />
+          ) : (
+            <span style={{ fontSize: 26 }}>💈</span>
+          )}
           <div>
             <div
               style={{
                 fontFamily: "'Playfair Display',serif",
                 fontWeight: 700,
                 fontSize: 20,
-                color: C.gold,
+                color: 'var(--brand)',
               }}
             >
               {tenant.name}
             </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: C.muted,
-                fontFamily: "'Courier New',monospace",
-                letterSpacing: 1,
-              }}
-            >
-              {tenant.slug}.barberos.com
-            </div>
+            {!isBusiness && (
+              <div
+                style={{
+                  fontSize: 9,
+                  color: C.muted,
+                  fontFamily: "'Courier New',monospace",
+                  letterSpacing: 1,
+                }}
+              >
+                {tenant.slug}.barberos.com
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -323,7 +338,7 @@ function BookHome({
             fontWeight: 800,
             lineHeight: 1.1,
             margin: '0 0 16px',
-            background: `linear-gradient(135deg,${C.cream} 40%,${C.gold})`,
+            background: `linear-gradient(135deg,${C.cream} 40%,var(--brand))`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
@@ -333,7 +348,7 @@ function BookHome({
         <p style={{ color: C.muted, fontSize: 14, maxWidth: 400, margin: '0 auto 30px' }}>
           Agenda tu cita en minutos. Elige barbero, servicio y horario.
         </p>
-        <button style={S.btnG} onClick={onStart}>
+        <button style={btnBrand} onClick={onStart}>
           Agendar Cita Ahora
         </button>
       </div>
@@ -360,7 +375,7 @@ function BookHome({
             <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, marginBottom: 6 }}>
               {s.name}
             </div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: C.gold, marginBottom: 4 }}>
+            <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--brand)', marginBottom: 4 }}>
               ${s.price}
             </div>
             <div style={{ fontSize: 11, color: C.muted }}>⏱ {s.duration_min} min</div>
@@ -389,7 +404,7 @@ function BookHome({
             onChange={(e) => setLk({ ...lk, phone: e.target.value })}
             onKeyDown={(e) => e.key === 'Enter' && onLookup()}
           />
-          <button style={S.btnG} onClick={onLookup}>
+          <button style={btnBrand} onClick={onLookup}>
             Buscar
           </button>
         </div>
@@ -438,10 +453,10 @@ function BookHome({
                     </div>
                     <div style={{ fontSize: 11, color: C.muted }}>
                       {apt.date} · {apt.time.slice(0, 5)} ·{' '}
-                      <span style={{ color: C.gold, fontWeight: 700 }}>${apt.total}</span>
+                      <span style={{ color: 'var(--brand)', fontWeight: 700 }}>${apt.total}</span>
                     </div>
                     {apt.pending_charge && (
-                      <div style={{ fontSize: 10, color: C.gold, marginTop: 3 }}>
+                      <div style={{ fontSize: 10, color: 'var(--brand)', marginTop: 3 }}>
                         ⚠️ Cargo pendiente
                       </div>
                     )}
@@ -575,7 +590,7 @@ function Step1({
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
-          style={{ ...S.btnG, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
+          style={{ ...btnBrand, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
           onClick={onNext}
         >
           Continuar →
@@ -654,7 +669,7 @@ function Step2({
               >
                 {s.name}
               </div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: C.gold }}>${s.price}</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--brand)' }}>${s.price}</div>
               <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>⏱ {s.duration_min} min</div>
             </div>
           )
@@ -665,7 +680,7 @@ function Step2({
           ← Volver
         </button>
         <button
-          style={{ ...S.btnG, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
+          style={{ ...btnBrand, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
           onClick={onNext}
         >
           Continuar →
@@ -770,7 +785,7 @@ function Step3({
           ← Volver
         </button>
         <button
-          style={{ ...S.btnG, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
+          style={{ ...btnBrand, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
           onClick={onNext}
         >
           Continuar →
@@ -836,7 +851,7 @@ function Step4({
           maxWidth: 480,
           marginBottom: 24,
           fontSize: 11,
-          color: C.gold,
+          color: 'var(--brand)',
           lineHeight: 1.6,
         }}
       >
@@ -848,7 +863,7 @@ function Step4({
           ← Volver
         </button>
         <button
-          style={{ ...S.btnG, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
+          style={{ ...btnBrand, opacity: ok ? 1 : 0.35, cursor: ok ? 'pointer' : 'not-allowed' }}
           onClick={onNext}
         >
           Revisar →
@@ -921,7 +936,7 @@ function Step5({
               <div style={{ fontSize: 11, color: C.muted }}>{barber.specialty}</div>
             </div>
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: C.gold }}>${service.price}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--brand)' }}>${service.price}</div>
         </div>
         <div style={{ padding: '18px 20px', display: 'grid', gap: 11 }}>
           {[
@@ -958,7 +973,7 @@ function Step5({
         <button className="gh" style={S.btnGh} onClick={onBack} disabled={submitting}>
           ← Editar
         </button>
-        <button style={S.btnG} onClick={onConfirm} disabled={submitting}>
+        <button style={btnBrand} onClick={onConfirm} disabled={submitting}>
           {submitting ? 'Confirmando...' : '✓ Confirmar Cita'}
         </button>
       </div>
@@ -980,7 +995,7 @@ function BookDone({
   return (
     <div style={{ textAlign: 'center', padding: '54px 0' }}>
       <div style={{ fontSize: 64, marginBottom: 20 }}>✅</div>
-      <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, color: C.gold, marginBottom: 10 }}>
+      <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, color: 'var(--brand)', marginBottom: 10 }}>
         ¡Cita Confirmada!
       </h2>
       <p style={{ color: C.muted, fontSize: 14, marginBottom: 22 }}>
@@ -1045,10 +1060,10 @@ function BookDone({
           }}
         >
           <span style={{ color: C.muted, fontSize: 12 }}>Total</span>
-          <span style={{ fontSize: 24, fontWeight: 700, color: C.gold }}>${service.price}</span>
+          <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--brand)' }}>${service.price}</span>
         </div>
       </div>
-      <button style={S.btnG} onClick={onAgain}>
+      <button style={btnBrand} onClick={onAgain}>
         Agendar otra cita
       </button>
     </div>

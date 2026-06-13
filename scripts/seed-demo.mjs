@@ -44,7 +44,7 @@ async function main() {
     .insert({
       slug: 'demo',
       name: 'Barbería El Maestro',
-      plan: 'pro',
+      plan: 'business',
       status: 'active',
       owner_email: 'demo@barberos.com',
       owner_name: 'Carlos Mendoza',

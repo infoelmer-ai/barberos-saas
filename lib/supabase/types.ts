@@ -14,6 +14,8 @@ export interface Tenant {
   owner_email: string
   owner_name: string | null
   owner_phone: string | null
+  logo_url: string | null
+  brand_color: string | null
   created_at: string
   updated_at: string
 }
