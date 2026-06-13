@@ -184,3 +184,38 @@ export async function sendTrialEnded(opts: {
     /* noop */
   }
 }
+
+// Confirmación + felicitación al mejorar de plan
+export async function sendPlanUpgraded(opts: {
+  ownerEmail: string
+  ownerName: string
+  tenantName: string
+  planName: string
+  planPrice: number
+  unlocked: string[]
+  adminUrl: string
+}) {
+  if (!resend) return
+  const list = opts.unlocked
+    .map(
+      (f) =>
+        `<tr><td style="padding:6px 0;color:${CREAM};font-size:14px"><span style="color:${GOLD};font-weight:bold">✓</span> ${f}</td></tr>`
+    )
+    .join('')
+  const body = `
+    <p style="margin:0 0 16px">🎉 ¡Felicidades <strong>${opts.ownerName || 'barbero'}</strong>! Mejoraste <strong>${opts.tenantName}</strong> al plan <strong style="color:${GOLD}">${opts.planName}</strong> ($${opts.planPrice}/mes).</p>
+    <p style="margin:0 0 10px;color:${CREAM}"><strong>Esto es lo que acabas de desbloquear:</strong></p>
+    <table width="100%" style="margin:0 0 18px">${list}</table>
+    <p style="margin:0 0 16px"><a href="${opts.adminUrl}" style="color:${GOLD}">Ir a explorar mis nuevas funciones →</a></p>
+    <p style="margin:0;color:${MUTED};font-size:12px">Las funciones ya están activas en tu panel. ¡Gracias por crecer con nosotros!</p>`
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: opts.ownerEmail,
+      subject: `🎉 ¡Felicidades! Mejoraste al plan ${opts.planName}`,
+      html: shell('¡Mejoraste tu plan!', body),
+    })
+  } catch {
+    /* noop */
+  }
+}
