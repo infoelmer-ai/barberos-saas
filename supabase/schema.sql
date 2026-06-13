@@ -21,6 +21,11 @@ CREATE TABLE tenants (
   owner_phone TEXT,
   logo_url TEXT,
   brand_color TEXT DEFAULT '#C9A84C',
+  payment_token TEXT,
+  payment_provider TEXT,
+  trial_reminder_3d_sent BOOLEAN DEFAULT false,
+  trial_reminder_1d_sent BOOLEAN DEFAULT false,
+  trial_ended_notified BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

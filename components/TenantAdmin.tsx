@@ -166,6 +166,43 @@ export default function TenantAdmin({
         </div>
       </header>
 
+      {tenant.status === 'trial' && tenant.trial_ends_at && (
+        <div
+          style={{
+            background: `${C.gold}12`,
+            borderBottom: `1px solid ${C.goldDm}`,
+            padding: '10px 28px',
+            fontSize: 12,
+            color: C.gold,
+            textAlign: 'center',
+            fontWeight: 600,
+          }}
+        >
+          🎁 Prueba gratis · te quedan{' '}
+          <strong>
+            {Math.max(0, Math.ceil((new Date(tenant.trial_ends_at).getTime() - Date.now()) / 86400000))} días
+          </strong>{' '}
+          · al terminar se activará tu plan {plan}
+        </div>
+      )}
+
+      {tenant.status === 'past_due' && (
+        <div
+          style={{
+            background: '#2B1A0D',
+            borderBottom: `1px solid #8B6F32`,
+            padding: '10px 28px',
+            fontSize: 12,
+            color: '#E8A84C',
+            textAlign: 'center',
+            fontWeight: 600,
+          }}
+        >
+          ⚠️ Tu prueba terminó. Reactiva tu cuenta agregando tu método de pago para seguir recibiendo
+          reservas.
+        </div>
+      )}
+
       <div style={S.wrap}>
         {/* Tabs */}
         <div

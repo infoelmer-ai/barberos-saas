@@ -128,3 +128,59 @@ export async function sendWelcome(opts: {
     /* noop */
   }
 }
+
+// Recordatorio: faltan X días para que termine la prueba
+export async function sendTrialReminder(opts: {
+  ownerEmail: string
+  ownerName: string
+  tenantName: string
+  daysLeft: number
+  adminUrl: string
+}) {
+  if (!resend) return
+  const d = opts.daysLeft
+  const when = d <= 1 ? 'mañana' : `en ${d} días`
+  const body = `
+    <p style="margin:0 0 16px">Hola <strong>${opts.ownerName || 'barbero'}</strong>, tu prueba gratis de <strong>${opts.tenantName}</strong> termina <strong style="color:${GOLD}">${when}</strong>.</p>
+    <p style="margin:0 0 16px;color:${CREAM}">Para no perder el acceso a tu agenda y tus citas, agrega tu método de pago. Tus datos y tu configuración se conservan.</p>
+    <p style="margin:0 0 16px"><a href="${opts.adminUrl}" style="color:${GOLD}">Ir a mi panel →</a></p>
+    <p style="margin:0;color:${MUTED};font-size:12px">¿Dudas? Responde a este correo y te ayudamos.</p>`
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: opts.ownerEmail,
+      subject:
+        d <= 1
+          ? `⏰ Tu prueba de ${opts.tenantName} termina mañana`
+          : `Tu prueba de ${opts.tenantName} termina en ${d} días`,
+      html: shell('Tu prueba está por terminar', body),
+    })
+  } catch {
+    /* noop */
+  }
+}
+
+// Aviso: la prueba terminó y se necesita método de pago
+export async function sendTrialEnded(opts: {
+  ownerEmail: string
+  ownerName: string
+  tenantName: string
+  adminUrl: string
+}) {
+  if (!resend) return
+  const body = `
+    <p style="margin:0 0 16px">Hola <strong>${opts.ownerName || 'barbero'}</strong>, tu prueba gratis de <strong>${opts.tenantName}</strong> ha terminado.</p>
+    <p style="margin:0 0 16px;color:${CREAM}">Tu barbería sigue guardada con todos tus barberos, servicios y citas. Para reactivar tu cuenta y seguir recibiendo reservas, agrega tu método de pago.</p>
+    <p style="margin:0 0 16px"><a href="${opts.adminUrl}" style="color:${GOLD}">Reactivar mi cuenta →</a></p>
+    <p style="margin:0;color:${MUTED};font-size:12px">¿Necesitas ayuda? Responde a este correo.</p>`
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: opts.ownerEmail,
+      subject: `Tu prueba de ${opts.tenantName} terminó — reactiva tu cuenta`,
+      html: shell('Tu prueba terminó', body),
+    })
+  } catch {
+    /* noop */
+  }
+}

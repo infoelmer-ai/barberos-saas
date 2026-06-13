@@ -16,6 +16,11 @@ export interface Tenant {
   owner_phone: string | null
   logo_url: string | null
   brand_color: string | null
+  payment_token: string | null
+  payment_provider: string | null
+  trial_reminder_3d_sent: boolean
+  trial_reminder_1d_sent: boolean
+  trial_ended_notified: boolean
   created_at: string
   updated_at: string
 }
