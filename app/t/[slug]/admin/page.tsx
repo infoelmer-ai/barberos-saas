@@ -32,7 +32,7 @@ export default async function TenantAdminPage({
         .eq('tenant_id', tenantId)
         .order('date', { ascending: false })
         .order('time', { ascending: true })
-        .limit(200),
+        .limit(2000),
     ])
     if (!barbers || !services) notFound()
     return (
@@ -76,7 +76,7 @@ export default async function TenantAdminPage({
       .eq('tenant_id', tenantId)
       .order('date', { ascending: false })
       .order('time', { ascending: true })
-      .limit(200),
+      .limit(2000),
   ])
 
   if (!barbers || !services) notFound()

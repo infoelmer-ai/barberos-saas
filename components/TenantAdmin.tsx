@@ -8,6 +8,7 @@ import { S } from '@/lib/styles'
 import type { Barber, Profile, Service, Tenant, Appointment } from '@/lib/supabase/types'
 import BarberManager from './BarberManager'
 import ServiceManager from './ServiceManager'
+import AdvancedAnalytics from './AdvancedAnalytics'
 
 interface Props {
   tenant: Tenant
@@ -26,9 +27,13 @@ export default function TenantAdmin({
   appointments,
   demoMode = false,
 }: Props) {
-  const [tab, setTab] = useState<'dashboard' | 'citas' | 'barberos' | 'servicios'>('dashboard')
+  const [tab, setTab] = useState<'dashboard' | 'analytics' | 'citas' | 'barberos' | 'servicios'>(
+    'dashboard'
+  )
   const [barbers, setBarbers] = useState(barbersInit)
   const [services, setServices] = useState(servicesInit)
+  const plan = tenant.plan
+  const hasAnalytics = plan === 'pro' || plan === 'business'
 
   async function logout() {
     const supabase = createClient()
@@ -175,11 +180,12 @@ export default function TenantAdmin({
           {(
             [
               { v: 'dashboard', l: 'Dashboard' },
+              { v: 'analytics', l: 'Analíticas' },
               { v: 'citas', l: 'Citas' },
               { v: 'barberos', l: 'Barberos' },
               { v: 'servicios', l: 'Servicios' },
             ] as const
-          ).map((x, i) => (
+          ).map((x, i, arr) => (
             <button
               key={x.v}
               onClick={() => setTab(x.v)}
@@ -188,7 +194,7 @@ export default function TenantAdmin({
                 background: tab === x.v ? `${C.gold}14` : C.bg2,
                 borderTop: 'none',
                 borderLeft: 'none',
-                borderRight: i < 3 ? `1px solid ${C.border}` : 'none',
+                borderRight: i < arr.length - 1 ? `1px solid ${C.border}` : 'none',
                 borderBottom: `2px solid ${tab === x.v ? C.gold : C.border}`,
                 color: tab === x.v ? C.gold : C.muted,
                 cursor: 'pointer',
@@ -200,6 +206,9 @@ export default function TenantAdmin({
               }}
             >
               {x.l}
+              {x.v === 'analytics' && plan === 'starter' && (
+                <span style={{ marginLeft: 5, fontSize: 9 }}>🔒</span>
+              )}
             </button>
           ))}
         </div>
@@ -218,6 +227,18 @@ export default function TenantAdmin({
           />
         )}
 
+        {tab === 'analytics' &&
+          (hasAnalytics ? (
+            <AdvancedAnalytics
+              appointments={appointments}
+              barbers={barbers}
+              services={services}
+              tenantSlug={tenant.slug}
+            />
+          ) : (
+            <AnalyticsUpsell />
+          ))}
+
         {tab === 'citas' && (
           <CitasTable
             appointments={appointments}
@@ -231,6 +252,51 @@ export default function TenantAdmin({
         )}
         {tab === 'servicios' && (
           <ServiceManager services={services} setServices={setServices} demoMode={demoMode} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Upsell de analíticas (plan Starter) ──────────────────────
+function AnalyticsUpsell() {
+  return (
+    <div style={{ ...S.card, textAlign: 'center', padding: '48px 24px' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>📈</div>
+      <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, color: C.gold, marginBottom: 10 }}>
+        Analíticas avanzadas
+      </h3>
+      <p style={{ color: C.muted, fontSize: 14, maxWidth: 440, margin: '0 auto 20px', lineHeight: 1.7 }}>
+        Tendencia de ingresos, horas y días pico, retención de clientes, comparativa mensual y
+        exportación a Excel. Disponible en los planes <strong style={{ color: C.cream }}>Pro</strong> y{' '}
+        <strong style={{ color: C.cream }}>Business</strong>.
+      </p>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2,1fr)',
+          gap: 10,
+          maxWidth: 420,
+          margin: '0 auto',
+          textAlign: 'left',
+        }}
+      >
+        {['📊 Tendencia de ingresos', '⏰ Horas y días pico', '🔁 Retención de clientes', '📥 Exportar a Excel'].map(
+          (f) => (
+            <div
+              key={f}
+              style={{
+                background: C.bg3,
+                border: `1px solid ${C.border}`,
+                borderRadius: 8,
+                padding: '10px 14px',
+                fontSize: 12,
+                color: C.cream,
+              }}
+            >
+              {f}
+            </div>
+          )
         )}
       </div>
     </div>

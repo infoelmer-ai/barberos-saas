@@ -104,6 +104,12 @@ async function main() {
     [-2, '10:00', 'Carlos Mendoza', 'Corte de Pelo', 'Histórico Uno', '7345-0001'],
     [-2, '14:00', 'Diego Herrera', 'Corte + Barba', 'Histórico Dos', '7345-0002'],
     [-1, '11:00', 'Andrés López', 'Corte de Barba', 'Histórico Tres', '7345-0003'],
+    // Clientes que REGRESAN (mismo teléfono) → para que la retención se vea real
+    [4, '10:00', 'Diego Herrera', 'Corte + Barba', 'Juan Pérez', '7890-1234'],
+    [5, '11:00', 'Carlos Mendoza', 'Corte de Pelo', 'Pedro Ramírez', '7123-4567'],
+    [6, '09:30', 'Andrés López', 'Corte de Barba', 'Roberto Gómez', '7234-5678'],
+    [-3, '15:00', 'Miguel Torres', 'Corte de Pelo', 'Luis García', '7345-6789'],
+    [-5, '16:00', 'Carlos Mendoza', 'Corte + Barba', 'Juan Pérez', '7890-1234'],
   ]
   const rows = apts.map(([day, time, bn, sn, cn, ph]) => ({
     tenant_id: tenant.id,
